@@ -4,9 +4,10 @@ Multi-lingual, context-aware idiom matching, wherever you type.
 
 A local-first Chrome extension that helps writers replace rough, literal, or cross-language idioms with culturally natural equivalents.
 
-The extension watches editable text fields as you type. When it sees a bracketed phrase, known idiom, or rough idiom cue, it sends the phrase and surrounding sentence to a local FastAPI backend. The backend first checks a coded multilingual idiom dictionary, then can fall back to Ollama and optional web search evidence when the idiom is not in the database.
+The extension watches editable text fields as you type. When it sees a bracketed phrase, known idiom, or rough idiom cue, it sends the phrase and surrounding sentence to a local FastAPI backend. The backend first checks a coded multilingual idiom dictionary, then can fall back to an AI + web search  when the idiom is not in the database.
 
 Example:
+<img width="1228" height="635" alt="Screenshot 2026-07-18 142738" src="https://github.com/user-attachments/assets/6ffd189b-c9b5-4939-8917-238fea951e40" />
 
 
 Suggested Spanish idiom:
