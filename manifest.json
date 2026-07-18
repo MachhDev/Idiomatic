@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Contextual Idiom Translator",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Suggests culturally appropriate idioms for rough cross-lingual phrases as you write.",
   "permissions": [
     "activeTab"
@@ -11,6 +11,9 @@
     "http://*/*",
     "https://*/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": [

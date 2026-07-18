@@ -22,6 +22,7 @@
   ].join(", ");
 
   const SENTENCE_BOUNDARY = /[.!?\n\r]/;
+  // Brackets are the preferred signal; known idioms and cue words are secondary.
   const KNOWN_IDIOM_PATTERN =
       /\b(?:kick the bucket|piece of cake|break a leg|spill the beans|under the weather|raining cats and dogs|costs an arm and a leg|hit the sack|let the cat out of the bag|once in a blue moon|bite the bullet|the ball is in your court|pulling my leg|on thin ice|burning the midnight oil|the last straw|break the ice|cut corners|hit the nail on the head|through thick and thin|when pigs fly|beat around the bush|call it a day|get cold feet|miss the boat|add fuel to the fire)\b/i;
   const ROUGH_CUE_PATTERN =
@@ -145,6 +146,7 @@
   }
 
   function detectRoughPhrase(sentence) {
+    // Return the exact text range to replace, while sending the clean phrase to the API.
     const bracketMatch = sentence.match(/\[([^\]]{2,300})\]/);
     if (bracketMatch) {
       return {
@@ -263,6 +265,30 @@
   }
 
   async function requestAiSuggestions(payload) {
+    if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+      try {
+        const result = await new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage({
+            type: "suggest-idiom",
+            payload
+          }, (response) => {
+            const runtimeError = chrome.runtime.lastError;
+            if (runtimeError) {
+              reject(runtimeError);
+              return;
+            }
+            resolve(response);
+          });
+        });
+        return {
+          suggestions: Array.isArray(result?.suggestions) ? result.suggestions : [],
+          message: result?.message || ""
+        };
+      } catch (error) {
+        // Fall through to direct fetch for development contexts where messaging is unavailable.
+      }
+    }
+
     const abortController = new AbortController();
     const timeoutId = window.setTimeout(() => abortController.abort(), FETCH_TIMEOUT_MS);
     try {
@@ -277,7 +303,7 @@
       if (!response.ok) {
         return {
           suggestions: [],
-          message: `AI backend returned ${response.status}.`
+          message: `Local idiom backend returned ${response.status}.`
         };
       }
       const data = await response.json();
@@ -288,7 +314,7 @@
     } catch (error) {
       return {
         suggestions: [],
-        message: "AI backend is not connected. Start the backend and Ollama, then keep typing."
+        message: "Local idiom backend is not connected. Start the backend, then keep typing."
       };
     } finally {
       window.clearTimeout(timeoutId);
@@ -316,17 +342,20 @@
     const absoluteStart = state.sentenceStart + roughPhrase.start;
     const absoluteEnd = state.sentenceStart + roughPhrase.end;
     const contextText = contextWindow(state.text, state.sentenceStart, state.sentenceEnd);
-    const requestKey = `${roughPhrase.phraseText}|${absoluteStart}|${absoluteEnd}|${TARGET_LANGUAGE}`;
+    // Prevent repeat calls for the same phrase while keeping edits at new positions fresh.
+    const requestKey = `${roughPhrase.phraseText}|${absoluteStart}|${absoluteEnd}|${TARGET_LANGUAGE}|${contextText}`;
 
     activeCandidate = {
       element,
       mode: state.mode,
       start: absoluteStart,
       end: absoluteEnd,
-      roughText: roughPhrase.displayText
+      roughText: roughPhrase.displayText,
+      reason: roughPhrase.reason
     };
 
-    if (requestKey === lastCandidateKey) {
+    if (requestKey === lastCandidateKey && (loading || currentSuggestions.length > 0 || currentMessage)) {
+      panelOpen = roughPhrase.reason === "bracketed" || panelOpen;
       showWidget(element);
       return;
     }
@@ -354,7 +383,18 @@
     currentSuggestions = result.suggestions
       .filter((suggestion) => suggestion && typeof suggestion.suggested_idiom === "string" && suggestion.suggested_idiom.trim())
       .slice(0, 5);
-    currentMessage = result.message || (currentSuggestions.length > 0 ? "" : "AI did not return suggestions for this phrase.");
+
+    if (currentSuggestions.length === 0 && roughPhrase.reason !== "bracketed") {
+      hideWidget();
+      return;
+    }
+
+    currentMessage = result.message || "";
+    if (currentSuggestions.length === 0 && !currentMessage) {
+      hideWidget();
+      return;
+    }
+
     panelOpen = true;
     showWidget(element);
   }
@@ -413,12 +453,17 @@
     closeButton.type = "button";
     closeButton.textContent = "x";
     closeButton.setAttribute("aria-label", "Close idiom suggestions");
+    closeButton.style.display = "inline-flex";
+    closeButton.style.alignItems = "center";
+    closeButton.style.justifyContent = "center";
     closeButton.style.width = "24px";
     closeButton.style.height = "24px";
+    closeButton.style.padding = "0";
     closeButton.style.border = "0";
     closeButton.style.borderRadius = "6px";
     closeButton.style.background = "#eef2f7";
     closeButton.style.color = "#374151";
+    closeButton.style.font = "700 14px/1 Arial, sans-serif";
     closeButton.style.cursor = "pointer";
     closeButton.addEventListener("click", hideWidget);
     header.appendChild(closeButton);
@@ -426,7 +471,7 @@
 
     if (currentSuggestions.length === 0) {
       const message = document.createElement("div");
-      message.textContent = currentMessage || "AI did not return suggestions.";
+      message.textContent = currentMessage || "Could not return suggestions.";
       message.style.color = "#4b5563";
       panel.appendChild(message);
     } else {
@@ -583,17 +628,32 @@
 
   function positionWidget(element) {
     const widget = document.getElementById(WIDGET_ID);
-    const rect = getEditorRect(element);
-    if (!widget || !rect) {
+    if (!widget) {
       return;
     }
     const viewportPadding = 12;
-    const width = Math.min(360, window.innerWidth - viewportPadding * 2);
+    const centered = activeCandidate?.reason === "bracketed";
+    const width = Math.min(centered ? 420 : 360, window.innerWidth - viewportPadding * 2);
+    widget.style.width = `${width}px`;
+    if (centered) {
+      widget.style.left = "50%";
+      widget.style.top = "50%";
+      widget.style.transform = "translate(-50%, -50%)";
+      return;
+    }
+
+    const rect = getEditorRect(element);
+    if (!rect) {
+      widget.style.left = "50%";
+      widget.style.top = "50%";
+      widget.style.transform = "translate(-50%, -50%)";
+      return;
+    }
     const left = Math.max(viewportPadding, Math.min(window.innerWidth - width - viewportPadding, rect.right - width - 8));
     const top = Math.max(viewportPadding, Math.min(window.innerHeight - 54, rect.bottom - 54));
-    widget.style.width = `${width}px`;
     widget.style.left = `${left}px`;
     widget.style.top = `${top}px`;
+    widget.style.transform = "none";
   }
 
   function showWidget(element) {
@@ -671,6 +731,7 @@
     if (!replacement) {
       return;
     }
+    // Forms use native input APIs; contenteditable needs a DOM Range replacement.
     const element = activeCandidate.element;
     if (activeCandidate.mode === "form" && (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)) {
       element.focus();

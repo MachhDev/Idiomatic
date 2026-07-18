@@ -113,6 +113,7 @@ SUGGESTION_SCHEMA: dict[str, Any] = {
 }
 
 
+# OpenAI fallback prompt. The coded dictionary is still the primary source.
 SYSTEM_PROMPT = (
     "You are an expert multilingual idiom translator, cross-cultural writing assistant, and tone editor. "
     "Analyze this text. The user is trying to write an idiom or a rough literal translation from another language. "
@@ -132,6 +133,7 @@ SYSTEM_PROMPT = (
 )
 
 
+# Ollama needs stronger guardrails because local models tend to literalize idioms.
 OLLAMA_IDIOM_LOOKUP_PROMPT = (
     "You are an idiom dictionary researcher. Your job is not literal translation. "
     "For a source idiom, proverb, saying, or rough literal phrase, identify the underlying meaning first, "
@@ -208,6 +210,7 @@ def infer_target_language_hint(payload: IdiomSuggestionRequest) -> str:
     if requested.lower() not in {"auto", "detect", "infer"}:
         return requested
 
+    # The surrounding sentence decides output language, not the bracketed phrase.
     inferred = infer_dictionary_target_language(payload.context_text, payload.phrase, payload.target_language)
     return inferred.title()
 
@@ -217,6 +220,7 @@ def build_search_queries(payload: IdiomSuggestionRequest) -> list[str]:
     if not phrase:
         return []
 
+    # Search evidence helps fallback models identify meaning; it is not returned directly.
     source_language = infer_language_hint(phrase)
     target_language = infer_target_language_hint(payload)
     language_cue = source_language if source_language != "unknown" else ""
@@ -338,6 +342,7 @@ def build_ollama_idiom_lookup_prompt(payload: IdiomSuggestionRequest, web_eviden
     rough_phrase = payload.phrase or "Infer the rough idiom from the context."
     tone_hint = payload.tone_hint or "Infer tone from the surrounding sentence."
     resolved_target_language = infer_target_language_hint(payload)
+    # When search fails, Ollama may still answer, but the prompt forbids literal guesses.
     evidence_section = web_evidence if web_evidence else "No web evidence was found. Use idiom knowledge only; do not guess literally."
     return (
         f"Target language request: {payload.target_language}\n"
@@ -581,6 +586,7 @@ def filter_unverified_suggestions(
     suggestions: list[IdiomSuggestion],
     minimum_confidence: float = 0.72
 ) -> list[IdiomSuggestion]:
+    # Keep only fallback answers that look like real equivalents, not source-word echoes.
     normalized_phrase = normalize_search_text(payload.phrase or payload.context_text).lower()
     source_tokens = {
         token
@@ -619,6 +625,7 @@ def filter_unverified_suggestions(
 
 
 def generate_suggestions(payload: IdiomSuggestionRequest) -> list[IdiomSuggestion]:
+    # Called only after the coded dictionary misses; choose the configured fallback.
     if IDIOM_FALLBACK_PROVIDER in {"none", "off", "disabled", "dictionary", "dictionary_only"}:
         return []
     if IDIOM_FALLBACK_PROVIDER == "deepl":
@@ -761,7 +768,6 @@ def test_page() -> str:
       <h1>Idiom Translator Test</h1>
       <p>Type a bracketed rough idiom, then pause.</p>
       <textarea autofocus>I would go out but [esta lloviendo a cantaros]</textarea>
-      <div contenteditable="true">estaba manteniendo la calma pero eso fue [the last straw]</div>
     </main>
   </body>
 </html>"""
@@ -770,6 +776,7 @@ def test_page() -> str:
 @app.post("/suggest-idiom", response_model=IdiomSuggestionResponse)
 def suggest_idiom(payload: IdiomSuggestionRequest) -> IdiomSuggestionResponse:
     try:
+        # Fast, deterministic path: known idioms are resolved before any AI fallback.
         database_suggestions, match_score, resolved_target_language = generate_database_suggestions(payload)
         if database_suggestions:
             return IdiomSuggestionResponse(
@@ -793,7 +800,7 @@ def suggest_idiom(payload: IdiomSuggestionRequest) -> IdiomSuggestionResponse:
             suggestions=suggestions,
             fallback_message=(
                 "We don't have that idiom in our dictionary yet, "
-                f"but Ollama looked for a real idiom equivalent."
+                "but here's a translation."
             )
         )
     except RuntimeError as configuration_error:

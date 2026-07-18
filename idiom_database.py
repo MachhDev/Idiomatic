@@ -52,11 +52,12 @@ STOPWORDS = {
 }
 
 
+# Each entry groups equivalent idioms by meaning; matching may start from any language.
 IDIOM_DATABASE: list[dict[str, Any]] = [
     {
         "meaning": "personal taste is subjective",
         "forms": {
-            "spanish": ["sobre gustos no hay nada escrito", "para gustos los colores", "en gustos se rompen generos"],
+            "spanish": ["sobre gustos no hay nada escrito", "en gustos se rompen generos"],
             "english": ["there is no accounting for taste", "to each their own", "different strokes for different folks"],
             "french": ["les gouts et les couleurs ne se discutent pas", "des gouts et des couleurs on ne discute pas"]
         }
@@ -64,7 +65,7 @@ IDIOM_DATABASE: list[dict[str, Any]] = [
     {
         "meaning": "it is raining very heavily",
         "forms": {
-            "spanish": ["llover a cantaros", "caer un aguacero"],
+            "spanish": ["llover a cantaros", "está lloviendo a cántaros", "caer un aguacero"],
             "english": ["raining cats and dogs", "pouring rain", "raining buckets"],
             "french": ["pleuvoir des cordes", "il pleut des cordes"]
         }
@@ -73,8 +74,8 @@ IDIOM_DATABASE: list[dict[str, Any]] = [
     {
         "meaning": "better to have one thing than hope for many",
         "forms": {
-            "spanish": ["mas vale pajaro en mano que cien volando"],
-            "english": ["a bird in the hand is worth two in the bush"],
+            "spanish": ["mas vale pajaro en mano que cien volando", "mas vale pajaro en mano que ciento volando"],
+            "english": ["a bird in the hand is worth two in the bush", "better an egg today than a hen tomorrow"],
             "french": ["un tien vaut mieux que deux tu l'auras"]
              }
              },
@@ -145,7 +146,7 @@ IDIOM_DATABASE: list[dict[str, Any]] = [
     {
         "meaning": "to avoid saying something directly",
         "forms": {
-            "spanish": ["andarse por las ramas"],
+            "spanish": ["andarse por las ramas", "andarse con rodeos"],
             "english": ["beat around the bush"],
             "french": ["tourner autour du pot"]
         }
@@ -370,9 +371,9 @@ IDIOM_DATABASE: list[dict[str, Any]] = [
     {
         "meaning": "do not judge by appearance",
         "forms": {
-            "spanish": ["no juzgues un libro por su portada"],
+            "spanish": ["no juzgues un libro por su portada", "el habito no hace al monje"],
             "english": ["do not judge a book by its cover"],
-            "french": ["il ne faut pas juger sur les apparences"]
+            "french": ["il ne faut pas juger sur les apparences", "l habit ne fait pas le moine"]
         }
     },
     {
@@ -761,6 +762,15 @@ IDIOM_DATABASE: list[dict[str, Any]] = [
                 "french": ["qui va a la chasse perd sa place"]
             }
             },
+
+    {       "meaning": "patient work beats any problem",
+            "forms": {
+                "spanish": ["lento pero seguro"],
+                "english": ["slow and steady wins the race", "slowly but surely"],
+                "french": ["rien ne sert de courir"]
+            }
+            },
+
     {
         "meaning": "to be drunk",
         "forms": {
@@ -919,7 +929,7 @@ IDIOM_DATABASE: list[dict[str, Any]] = [
     {
         "meaning": "to do things in the wrong order",
         "forms": {
-            "spanish": ["empezar la casa por el tejado"],
+            "spanish": ["empezar la casa por el tejado", "poner el carro delante de los bueyes"],
             "english": ["put the cart before the horse"],
             "french": ["mettre la charrue avant les boeufs"]
         }
@@ -1007,7 +1017,7 @@ IDIOM_DATABASE: list[dict[str, Any]] = [
     {
         "meaning": "to overestimate what one can handle",
         "forms": {
-            "spanish": ["abarcar demasiado"],
+            "spanish": ["abarcar demasiado", "el que mucho abarca poco aprieta"],
             "english": ["bite off more than one can chew"],
             "french": ["avoir les yeux plus gros que le ventre"]
         }
@@ -1191,8 +1201,8 @@ IDIOM_DATABASE: list[dict[str, Any]] = [
     {
         "meaning": "to keep something secret",
         "forms": {
-            "spanish": ["guardar el secreto"],
-            "english": ["keep it under your hat"],
+            "spanish": ["guardar el secreto", "cremallera"],
+            "english": ["keep it under your hat", "keep one's lips sealed", "my lips are sealed"],
             "french": ["garder ca pour soi"]
         }
     },
@@ -1257,6 +1267,91 @@ IDIOM_DATABASE: list[dict[str, Any]] = [
             "english": ["once bitten twice shy", "once bitten, twice shy"],
             "french": ["chat echaude craint l eau froide"]
         }
+    },
+    {
+        "meaning": "to want two mutually incompatible advantages at the same time",
+        "meaning_aliases": [
+            "wanting to keep two good things that cannot both be kept",
+            "trying to have it both ways"
+        ],
+        "forms": {
+            "english": ["have one's cake and eat it too", "you can't have your cake and eat it too"],
+            "french": ["avoir le beurre et l argent du beurre"]
+        }
+    },
+    {
+        "meaning": "something from the past that no longer matters",
+        "meaning_aliases": [
+            "a past problem that should be forgotten",
+            "what happened before is no longer important"
+        ],
+        "forms": {
+            "spanish": ["agua pasada no mueve molino"],
+            "english": ["water under the bridge"]
+        }
+    },
+    {
+        "meaning": "the same rule or treatment should apply equally to another person",
+        "meaning_aliases": [
+            "what is fair for one person is fair for another",
+            "someone should accept the same treatment they give others"
+        ],
+        "forms": {
+            "spanish": ["lo que es bueno para el pavo es bueno para la pava"],
+            "english": ["what's good for the goose is good for the gander", "what is good for the goose is good for the gander"]
+        }
+    },
+    {
+        "meaning": "two alternatives are effectively the same",
+        "meaning_aliases": [
+            "there is no meaningful difference between the two choices",
+            "it does not matter which option is chosen"
+        ],
+        "forms": {
+            "spanish": ["ser el mismo perro con diferente collar", "tres cuartos de lo mismo"],
+            "english": ["six of one half a dozen of the other", "six of one, half a dozen of the other", "six in one hand and a half dozen in the other"]
+        }
+    },
+    {
+        "meaning": "success can only be judged after something has been tried or used",
+        "meaning_aliases": [
+            "the real test is in the results",
+            "you can only know whether it works by trying it"
+        ],
+        "forms": {
+            "spanish": ["al freir de los huevos lo vera"],
+            "english": ["the proof of the pudding is in the eating", "the proof is in the pudding"]
+        }
+    },
+    {
+        "meaning": "in a straight line between two places rather than by the road route",
+        "meaning_aliases": [
+            "the direct distance between two locations",
+            "as a direct route"
+        ],
+        "forms": {
+            "spanish": ["a vuelo de pajaro"],
+            "english": ["as the crow flies", "beeline"]
+        }
+    },
+    {
+        "meaning": "it is raining very heavily",
+        "forms": {
+            "spanish": ["lo que trajo la marea", "lo que trajo la corriente", "lo que trajo la tormenta"],
+            "english": ["what the cat dragged in"],
+            "french": ["Regardez qui le bon vent nous amène", "Regardez donc ce que cette beauté nous ramène"]
+        }
+    },
+    {
+        "meaning": "criticizing someone for a fault that you also have",
+        "meaning_aliases": [
+            "someone hypocritically criticizes another person",
+            "do not criticize others for flaws you share"
+        ],
+        "forms": {
+            "spanish": ["el burro hablando de orejas"],
+            "english": ["pot calling the kettle black", "the pot calling the kettle black", "don't throw stones if you live in a glass house", "do not throw stones if you live in a glass house"]
+        }
     }
 ]
 
@@ -1278,6 +1373,7 @@ def normalize_language(value: str) -> str:
 
 
 def surrounding_sentence_text(context_text: str, phrase: str | None) -> str:
+    # Ignore bracketed/source text so it cannot override the sentence's target language.
     surrounding = re.sub(r"\[[^\]]*\]", " ", context_text)
     if phrase:
         surrounding = re.sub(re.escape(phrase), " ", surrounding, flags=re.IGNORECASE)
@@ -1320,6 +1416,7 @@ def score_phrase_against_form(phrase: str, idiom_form: str) -> float:
         longer = max(len(normalized_phrase), len(normalized_form))
         return 0.88 + min(0.1, shorter / max(longer, 1) * 0.1)
 
+    # Exact and contained matches win; token/sequence scores catch minor wording drift.
     phrase_tokens = set(normalized_phrase.split())
     form_tokens = set(normalized_form.split())
     token_score = len(phrase_tokens & form_tokens) / max(len(phrase_tokens | form_tokens), 1)
@@ -1336,6 +1433,7 @@ def score_phrase_against_meaning(phrase: str, entry: dict[str, Any]) -> float:
     if len(query_tokens) < 2:
         return 0.0
 
+    # Meaning aliases let rough explanations match an idiom even when no form matches.
     best_score = 0.0
     for meaning in [entry["meaning"], *entry.get("meaning_aliases", [])]:
         normalized_meaning = normalize_text(meaning)
@@ -1360,6 +1458,7 @@ def find_database_matches(
     resolved_target_language = infer_target_language(context_text, phrase, target_language)
     scored_entries: list[tuple[float, dict[str, Any], str, str]] = []
 
+    # Score against every known language form, then emit only the resolved target language.
     for entry in IDIOM_DATABASE:
         best_score = 0.0
         best_form = ""
@@ -1389,6 +1488,7 @@ def find_database_matches(
     for score, entry, matched_form, match_kind in scored_entries[:limit * 3]:
         if top_score >= 0.92 and score < 0.9:
             continue
+        # Do not fall back to English here; missing target forms should produce no hit.
         target_forms = entry["forms"].get(resolved_target_language, [])
         for target_form in target_forms[:1]:
             normalized_target_form = normalize_text(target_form)
