@@ -2,7 +2,7 @@
 Multi-lingual, context-aware idiom matching, wherever you type.
 
 
-A local-first Chrome extension that helps writers replace rough, literal, or cross-language idioms with culturally natural equivalents.
+A local-first Chrome extension that helps writers replace rough, literal, or cross-language idioms with culturally natural equivalents. Minimum Viable Product.
 
 The extension watches editable text fields as you type. When it sees a bracketed phrase, known idiom, or rough idiom cue, it sends the phrase and surrounding sentence to a local FastAPI backend. The backend first checks a coded multilingual idiom dictionary, then can fall back to an AI + web search  when the idiom is not in the database.
 
